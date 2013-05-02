@@ -27,8 +27,7 @@ pip install sapphire
 License Information
 -------------------
 
-The contents of this repository are released under the Mozilla Public
-# License, v. 2.0.
+The contents of this repository are released under the Mozilla Public License, v. 2.0.
 
 See http://mozilla.org/MPL/2.0/ for more information.
 

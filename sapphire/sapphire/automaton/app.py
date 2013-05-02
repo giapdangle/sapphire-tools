@@ -10,10 +10,6 @@
 # </license>
 #
 
-import gevent
-import gevent.monkey
-gevent.monkey.patch_all()
-
 import sys
 import os
 import socket
@@ -25,6 +21,7 @@ from sapphire.core import origin
 
 import logging
 import signal
+import time
 
 
 # Change stdout to automatically encode to utf8.
@@ -46,8 +43,6 @@ def run(script_name=None):
 
     if not script_name:
         script_name = sys.argv[0]
-
-    gevent.signal(signal.SIGTERM, sigterm_handler) 
         
     script_control = KVObject(collection="automaton")
     script_control.running = True
@@ -65,21 +60,22 @@ def run(script_name=None):
 
         # wait some time for objects to arrive...
         # this is not critical, but helps a bit for macros that run on startup
-        gevent.sleep(2.0)
+        #time.sleep(2.0)
 
         # main script control loop
         while True:
+
             macro.start()
 
             while script_control.running:
-                gevent.sleep(1.0)
+                time.sleep(1.0)
 
-            macro.stop()
+            macro.pause()
 
             logging.info("Automaton stopped by script control")
 
             while not script_control.running:
-                gevent.sleep(1.0)                              
+                time.sleep(1.0)                              
 
             logging.info("Automaton started by script control")
 

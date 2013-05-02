@@ -21,7 +21,7 @@ class Action(object):
 
         self.running = False
 
-    def _run(self, event):
+    def run(self, event):
         self.running = True
 
         self.pre(event)
@@ -48,7 +48,7 @@ class TargetAction(Action):
 
         super(TargetAction, self).__init__(**kwargs)
 
-    def _run(self, event):
+    def run(self, event):
         # run target query
         targets = self.targets()
 

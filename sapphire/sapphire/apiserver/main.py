@@ -10,12 +10,9 @@
 # </license>
 #
 
-from sapphire.automaton import *
-
 import apiserver
 
 from sapphire.core.version import VERSION
-from sapphire.core.settings import get_app_dir
 from sapphire.core import settings
 from sapphire.core import KVObjectsManager
 
@@ -23,6 +20,7 @@ import os
 import sys
 import logging
 import argparse
+import time
 
 
 def main():
@@ -31,10 +29,14 @@ def main():
     logging.info("Sapphire API Server v%s" % (str(VERSION)))
     logging.info("Process ID: %d" % (os.getpid()))
         
+
+    KVObjectsManager.start()
+
     api_server = apiserver.APIServer()
-    
-    run()    
-    
+    api_server.run()
+
+    KVObjectsManager.stop()
+
     
 if __name__ == "__main__":
     main()

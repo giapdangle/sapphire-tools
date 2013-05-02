@@ -17,6 +17,13 @@ Contents
 - **/tftp** - Generic TFTP client
 
 
+Installation
+------------
+
+pip install sapphire
+
+
+
 License Information
 -------------------
 

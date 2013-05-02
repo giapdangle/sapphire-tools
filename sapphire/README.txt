@@ -20,9 +20,10 @@ Contents
 License Information
 -------------------
 
-The contents of this repository are released under the Creative Commons Attribution-ShareAlike 3.0 Unported license.
+The contents of this repository are released under the Mozilla Public
+# License, v. 2.0.
 
-See http://creativecommons.org/licenses/by-sa/3.0/ for more information.
+See http://mozilla.org/MPL/2.0/ for more information.
 
 
 

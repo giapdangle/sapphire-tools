@@ -23,7 +23,7 @@ setup(
              'scripts/sapphire_deviceserver.py',
              'scripts/sapphire_automaton.py'],
 
-    license=open('LICENSE.txt').read(),
+    license='License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
 
     long_description=open('README.txt').read(),
 

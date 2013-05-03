@@ -11,9 +11,7 @@
 # </license>
 #
 
-import gevent
-import gevent.monkey
-gevent.monkey.patch_all()
+import threading
 
 from sapphire.core import KVObjectsManager
 from sapphire.devices import Device, DeviceUnreachableException
@@ -219,7 +217,7 @@ if __name__ == '__main__':
             print "Found: %d" % (d.device_id)        
 
 
-        greenlets = list()
+        threads = list()
 
         for device in all_devices:
             def scan_func(d):            
@@ -233,9 +231,11 @@ if __name__ == '__main__':
                 except DeviceUnreachableException:
                     print "!!! Device %d unreachable" % (d.device_id)
 
-            greenlets.append(gevent.spawn(scan_func, device))
+            t = threading.Thread(target=scan_func, args=(device))
+            threads.append(t)
 
-        gevent.joinall(greenlets)
+        for t in threads:
+            t.join()
 
 
         c = SapphireConsole()

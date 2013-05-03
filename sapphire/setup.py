@@ -30,8 +30,6 @@ setup(
     long_description=open('README.txt').read(),
 
     install_requires=[
-        "gevent >= 0.13.8",
-        "greenlet >= 0.4.0",
         "bottle >= 0.11.4",
         "beaker >= 1.6.4",
         "pyserial >= 2.6",

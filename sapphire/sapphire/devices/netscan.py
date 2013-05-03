@@ -10,8 +10,8 @@
 # </license>
 #
 
-import gevent
-
+import threading
+import time
 import logging
 
 from sapphire.core import KVObjectsManager
@@ -47,7 +47,7 @@ def scan():
     return devices
 
 
-class NetworkScanner(gevent.Greenlet):
+class NetworkScanner(threading.Thread):
     def __init__(self, scan_interval=DEFAULT_SCAN_INTERVAL):
         super(NetworkScanner, self).__init__()
         
@@ -57,26 +57,21 @@ class NetworkScanner(gevent.Greenlet):
 
         self.start()
 
-    def _run(self):
+    def run(self):
         logging.info("NetworkScanner started")
 
         while self.running:
             try:
-                try:
-                    scan()
+                scan()
+            
+            except DeviceUnreachableException as e:
+                logging.info(e)
                 
-                except DeviceUnreachableException as e:
-                    logging.info(e)
-                
-            except gevent.GreenletExit:
-                pass
-
-            gevent.sleep(self.scan_interval)
+            time.sleep(self.scan_interval)
                 
         logging.info("NetworkScanner stopped")
 
     def stop(self):
         logging.info("NetworkScanner shutting down")
         self.running = False
-        self.kill()
 

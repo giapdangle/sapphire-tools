@@ -10,10 +10,8 @@
 # </license>
 #
 
-
-
-import gevent
-
+import threading
+import time
 import logging
 from datetime import datetime, timedelta
 
@@ -65,12 +63,12 @@ class DeviceAttachAction(Action):
 Macro(triggers=DeviceAttachTrigger(), actions=DeviceAttachAction())
 
 
-class _DeviceMonitor(gevent.Greenlet):
+class _DeviceMonitor(threading.Thread):
     def __init__(self, device=None):
         super(_DeviceMonitor, self).__init__()
         
         self.device = device
-        self.attach_event = gevent.event.Event()
+        self.attach_event = threading.Event()
         
         self.running = True
 
@@ -91,47 +89,42 @@ class _DeviceMonitor(gevent.Greenlet):
         self.subscribe_notifications()
         self.device.getAllKV()
 
-    def _run(self):
+    def run(self):
         logging.info("DeviceMonitor:%s running" % (self.device.device_id))
 
-        try:
+        while self.running:
+            try:
+                self.scan()
 
-            while self.running:
-                try:
-                    self.scan()
+                # device is online
+                logging.info("Device: %s online" % (self.device.device_id))
 
-                    # device is online
-                    logging.info("Device: %s online" % (self.device.device_id))
+                # watchdog
+                while self.device.device_status == "online":
+                    time.sleep(1.0)
 
-                    # watchdog
-                    while self.device.device_status == "online":
-                        gevent.sleep(1.0)
+                    # check heartbeat
+                    #if (datetime.utcnow() - self.device.updated_at) > timedelta(minutes=2):
+                    #    logging.info("Device: %s watchdog timeout" % (self.device.device_id))            
 
-                        # check heartbeat
-                        #if (datetime.utcnow() - self.device.updated_at) > timedelta(minutes=2):
-                        #    logging.info("Device: %s watchdog timeout" % (self.device.device_id))            
+                    #    self.device.device_status = "offline"
+                    #    logging.info("Device: %s offline" % (self.device.device_id))
 
-                        #    self.device.device_status = "offline"
-                        #    logging.info("Device: %s offline" % (self.device.device_id))
+                        # set the attach event now so we'll attempt to scan immediately
+                    #    self.attach_event.set()
 
-                            # set the attach event now so we'll attempt to scan immediately
-                        #    self.attach_event.set()
+            except DeviceUnreachableException:
+                #logging.info("Device: %s unreachable" % (self.device.device_id))
+                pass
 
-                except DeviceUnreachableException:
-                    #logging.info("Device: %s unreachable" % (self.device.device_id))
-                    pass
+            except Exception as e:
+                logging.error("DeviceMonitor: %s raised exception: %s: %s" % (self.device.device_id, type(e), e))
 
-                except Exception as e:
-                    logging.error("DeviceMonitor: %s raised exception: %s: %s" % (self.device.device_id, type(e), e))
-
-                # wait for attach, or time delay to expire
-                self.attach_event.wait(60.0)
-                self.attach_event.clear()
-                
-                #logging.info("Retrying device: %s" % (self.device.device_id))                
-
-        except gevent.GreenletExit:
-            pass
+            # wait for attach, or time delay to expire
+            self.attach_event.wait(60.0)
+            self.attach_event.clear()
+            
+            #logging.info("Retrying device: %s" % (self.device.device_id))                
 
         self.unsubscribe_notifications()
 

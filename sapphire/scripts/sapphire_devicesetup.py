@@ -1,5 +1,6 @@
 
-from device import Device
+from sapphire.devices import *
+
 import serial
 import serial.tools.list_ports
 import os
@@ -60,17 +61,17 @@ if __name__ == '__main__':
         # program each item to target device
         print "Setting %s to %s" % (cfgitem[0], cfgitem[1])
         
-        dev.setConfig(cfgitem[0], cfgitem[1])
+        dev.setKey(cfgitem[0], cfgitem[1])
     
     # get 802.15.4 MAC
     mac = get_random_mac()
     print "Setting 802.15.4 MAC to %s" % (mac)
-    dev.setConfig("mac_addr", mac)
+    dev.setKey("mac_addr", mac)
 
     # get short address
     short = get_short_addr()
     print "Setting 802.15.4 short to %d" % (short)
-    dev.setConfig("short_addr", short)
+    dev.setKey("short_addr", short)
     
     # set security keys
     auth_key = cfg.get('keys', 'wcom_auth_key')

@@ -21,7 +21,8 @@ setup(
              'scripts/sapphiremake.py',
              'scripts/sapphire_apiserver.py',
              'scripts/sapphire_deviceserver.py',
-             'scripts/sapphire_automaton.py'],
+             'scripts/sapphire_automaton.py',
+             'scripts/sapphire_devicesetup.py'],
 
     license='License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
 

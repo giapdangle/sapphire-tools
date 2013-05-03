@@ -14,6 +14,7 @@ import json
 from datetime import datetime
 import uuid
 import logging
+import collections
 
 import origin
 from kvevent import KVEvent, SIGNAL_RECEIVED_KVEVENT, SIGNAL_SENT_KVEVENT
@@ -23,6 +24,7 @@ import json_codec
 from pydispatch import dispatcher
 import threading
 import settings
+
 
 
 
@@ -66,6 +68,7 @@ class KVObject(object):
             self.collection = None
 
         self._attrs = kwargs
+        self._pending_events = dict()
 
     def to_dict(self):
         with self._lock:
@@ -175,12 +178,8 @@ class KVObject(object):
                                     timestamp=datetime.utcnow(),
                                     object_id=self.object_id)
 
-                    try:
-                        KVObjectsManager.send_event(event)
-
-                    except AttributeError:
-                        # publisher not running
-                        pass
+                    # post event to change list (hash, actually)
+                    self._pending_events[key] = event
 
     def update(self, key, value, timestamp=None):    
         with self._lock:
@@ -202,6 +201,13 @@ class KVObject(object):
                 # publish to exchange
                 try:
                     KVObjectsManager._publisher.publish_method("publish", self)
+
+                    # check if there are events to publish
+                    if len(self._pending_events) > 0:
+                        KVObjectsManager.send_events(self._pending_events.values())
+
+                        # clear events
+                        self._pending_events = dict()
 
                 except AttributeError:
                     # publisher not running
@@ -255,7 +261,15 @@ class KVObjectsManager(object):
 
             KVObjectsManager._publisher = Publisher(KVObjectsManager)
             KVObjectsManager._subscriber = Subscriber(KVObjectsManager)
+
+            origin_obj = KVObject(collection="origin")
+
+            import socket
+            origin_obj.hostname = socket.gethostname()
+
+            origin_obj.publish()
         
+
     @staticmethod
     def request_objects():
         with KVObjectsManager.__lock:
@@ -301,29 +315,43 @@ class KVObjectsManager(object):
         
 
     @staticmethod
-    def receive_event(event):
+    def receive_events(events):
+        # check if events is iterable
+        if not isinstance(events, collections.Sequence):
+            events = [events]
+
         with KVObjectsManager.__lock:
-            if not isinstance(event, KVEvent):
-                event = KVEvent().from_dict(event)
 
-            try:
-                # attach object to event
-                event.kvobject = KVObjectsManager._objects[event.object_id]
+            # update objects atomically
+            for event in events:
+                if not isinstance(event, KVEvent):
+                    event = KVEvent().from_dict(event)
 
-                # update object
-                event.kvobject.update(event.key, event.value, timestamp=event.timestamp)
+                try:
+                    # attach object to event
+                    event.kvobject = KVObjectsManager._objects[event.object_id]
 
-            except KeyError:
-                pass
+                    # update object
+                    event.kvobject.update(event.key, event.value, timestamp=event.timestamp)
 
+                except KeyError:
+                    pass
+
+        # object lock released, fire events    
+        for event in events:
             event.receive()
 
     @staticmethod
-    def send_event(event):
-        with KVObjectsManager.__lock:
-            KVObjectsManager._publisher.publish_method("event", event)
+    def send_events(events):
+        # check if events is iterable
+        if not isinstance(events, collections.Sequence):
+            events = [events]
 
-            event.send()
+        with KVObjectsManager.__lock:
+            KVObjectsManager._publisher.publish_method("events", events)
+
+            for event in events:
+                event.send()
             
     @staticmethod
     def stop():

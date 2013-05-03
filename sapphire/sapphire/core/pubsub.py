@@ -96,8 +96,8 @@ class Subscriber(threading.Thread):
         if msg["method"] == "publish":
             self.object_manager.update(msg["data"])
         
-        elif msg["method"] == "event":
-            self.object_manager.receive_event(msg["data"])
+        elif msg["method"] == "events":
+            self.object_manager.receive_events(msg["data"])
 
         elif msg["method"] == "delete":
             self.object_manager.delete(msg["data"]["object_id"])

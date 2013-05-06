@@ -39,6 +39,8 @@ class KVObject(object):
                  collection=None,
                  **kwargs):
 
+        super(KVObject, self).__init__()
+
         self.__dict__["_lock"] = threading.RLock()
         
         self.__dict__["object_id"] = None
@@ -320,13 +322,18 @@ class KVObjectsManager(object):
         if not isinstance(events, collections.Sequence):
             events = [events]
 
-        with KVObjectsManager.__lock:
+        events_temp = list()
+        for event in events:
+            if not isinstance(event, KVEvent):
+                event = KVEvent().from_dict(event)
 
+            events_temp.append(event)
+
+        events = events_temp
+
+        with KVObjectsManager.__lock:
             # update objects atomically
             for event in events:
-                if not isinstance(event, KVEvent):
-                    event = KVEvent().from_dict(event)
-
                 try:
                     # attach object to event
                     event.kvobject = KVObjectsManager._objects[event.object_id]

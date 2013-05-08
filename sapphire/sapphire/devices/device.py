@@ -793,8 +793,8 @@ class Device(KVObject):
             raise IOError("Firmware image not found")
         
         # delete old firmware
-        self.openFile("firmware.bin")
-        self.removeFile()
+        file_id = self.get_file_id("firmware.bin")
+        self.remove_file(file_id)
         
         # read firmware data
         f = open(fw_file, 'rb')

@@ -183,6 +183,9 @@ class KVObject(object):
                     # post event to change list (hash, actually)
                     self._pending_events[key] = event
 
+            else:
+                raise KeyError
+
     def update(self, key, value, timestamp=None):    
         with self._lock:
             self._attrs[key] = value
@@ -198,25 +201,31 @@ class KVObject(object):
                 #if self.object_id not in KVObjectsManager._objects:
                 logging.debug("Publishing object: %s" % (str(self)))
 
-                self.updated_at = datetime.utcnow()
-
                 # publish to exchange
                 try:
                     KVObjectsManager._publisher.publish_method("publish", self)
 
-                    # check if there are events to publish
-                    if len(self._pending_events) > 0:
-                        KVObjectsManager.send_events(self._pending_events.values())
-
-                        # clear events
-                        self._pending_events = dict()
+                    # add to objects registry
+                    KVObjectsManager._objects[self.object_id] = self
 
                 except AttributeError:
                     # publisher not running
                     pass
 
-                # add to objects registry
-                KVObjectsManager._objects[self.object_id] = self
+            self.updated_at = datetime.utcnow()
+
+            # push events to exchange
+            try:
+                # check if there are events to publish
+                if len(self._pending_events) > 0:
+                    KVObjectsManager.send_events(self._pending_events.values())
+
+                    # clear events
+                    self._pending_events = dict()
+
+            except AttributeError:
+                # publisher not running
+                pass
 
     def _unpublish(self):
         with self._lock:

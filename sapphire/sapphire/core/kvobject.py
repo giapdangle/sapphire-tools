@@ -85,8 +85,7 @@ class KVObject(object):
             return d
 
     def to_json(self):
-        with self._lock:
-            return json_codec.Encoder().encode(self.to_dict())
+        return json_codec.Encoder().encode(self.to_dict())
 
     def from_dict(self, d):
         with self._lock:
@@ -112,8 +111,7 @@ class KVObject(object):
             return self
 
     def from_json(self, j):
-        with self._lock:
-            return self.from_dict(json_codec.Decoder().decode(j))
+        return self.from_dict(json_codec.Decoder().decode(j))
 
     def __str__(self):
         with self._lock:
@@ -129,13 +127,12 @@ class KVObject(object):
             return s
 
     def query(self, **kwargs):
-        with self._lock:
-            d = self.to_dict()
+        d = self.to_dict()
 
-            if queryable.query_dict(d, **kwargs):
-                return self
+        if queryable.query_dict(d, **kwargs):
+            return self
 
-            return None
+        return None
 
     def __getattr__(self, key):
         if key == "_lock":
@@ -218,6 +215,7 @@ class KVObject(object):
             try:
                 # check if there are events to publish
                 if len(self._pending_events) > 0:
+                    logging.debug("Pushing events: %s" % (str(self)))
                     KVObjectsManager.send_events(self._pending_events.values())
 
                     # clear events
@@ -363,11 +361,10 @@ class KVObjectsManager(object):
         if not isinstance(events, collections.Sequence):
             events = [events]
 
-        with KVObjectsManager.__lock:
-            KVObjectsManager._publisher.publish_method("events", events)
+        KVObjectsManager._publisher.publish_method("events", events)
 
-            for event in events:
-                event.send()
+        for event in events:
+            event.send()
             
     @staticmethod
     def stop():

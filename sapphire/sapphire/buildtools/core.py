@@ -484,6 +484,24 @@ def save_project_info(name, target_dir):
 
     logging.info("Saving project listing to: %s" % (data_dir))
 
+def remove_project_info(project_name):
+    # check if project exists
+    try:
+        project = get_project_builder(project_name)
+    except KeyError:
+        raise ProjectNotFoundException
+
+    data = get_project_list()
+
+    del data[project_name]
+
+    f = open(get_project_info_file(), 'w')
+    f.truncate(0)
+    f.write(json.dumps(data, indent=4, separators=(',', ': ')))
+    f.close()
+
+    logging.info("Removed %s from listing" % (project_name))
+
 def get_project_builder(proj_name=None, fwid=None):
     projects = get_project_list()
     
@@ -563,6 +581,7 @@ def main():
     parser.add_argument("--list", "-l", action="store_true", help="list projects")
     parser.add_argument("--reset", action="store_true", help="reset project listing")
     parser.add_argument("--create", help="create a new template project")
+    parser.add_argument("--unlink", help="unlink a project")
 
     args = vars(parser.parse_args())
 
@@ -586,6 +605,11 @@ def main():
     # check if creating a new project
     if args["create"]:
         make_project(args["create"])
+        return
+
+    # check if unlinking a new project
+    if args["unlink"]:
+        remove_project_info(args["unlink"])
         return
 
     # check if project is given

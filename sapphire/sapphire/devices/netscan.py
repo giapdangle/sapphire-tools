@@ -35,8 +35,6 @@ def scan():
 
     devices.extend(gateways)
 
-    all_devices = KVObjectsManager.query(all=True)
-
     for device in devices:
         # check if device has been published
         if len(KVObjectsManager.query(device_id=device.device_id)) == 0:

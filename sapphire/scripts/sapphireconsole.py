@@ -231,12 +231,15 @@ if __name__ == '__main__':
                 except DeviceUnreachableException:
                     print "!!! Device %d unreachable" % (d.device_id)
 
-            t = threading.Thread(target=scan_func, args=(device))
+            t = threading.Thread(target=scan_func, args=[device])
+            t.start()
+
             threads.append(t)
 
         for t in threads:
             t.join()
 
+        
 
         c = SapphireConsole()
 

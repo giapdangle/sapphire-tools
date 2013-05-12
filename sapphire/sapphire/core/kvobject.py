@@ -202,12 +202,12 @@ class KVObject(object):
                 try:
                     KVObjectsManager._publisher.publish_method("publish", self)
 
-                    # add to objects registry
-                    KVObjectsManager._objects[self.object_id] = self
-
                 except AttributeError:
                     # publisher not running
                     pass
+
+                # add to objects registry
+                KVObjectsManager._objects[self.object_id] = self
 
             self.updated_at = datetime.utcnow()
 

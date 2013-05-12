@@ -667,46 +667,6 @@ class Device(KVObject):
         if result.status < 0:
             raise IOError("File: %s not deleted" % (file_id))
 
-    # DEPRECATED
-    def openFile(self, name):
-        result = self._sendCommand(self._protocol.OpenFile(name=name))
-        
-        if result.status < 0:
-            raise IOError("Could not open file")
-        
-        return result
-
-
-    # DEPRECATED
-    def closeFile(self):
-        return self._sendCommand(self._protocol.CloseFile()) 
-    
-    # DEPRECATED
-    def readFile(self, position):
-        return self._sendCommand(self._protocol.ReadFile(position=position))
-    
-    # DEPRECATED
-    def writeFile(self, position, data):
-        return self._sendCommand(self._protocol.WriteFile(position=position, data=data))
-    
-    # DEPRECATED
-    def removeFile(self):
-        return self._sendCommand(self._protocol.RemoveFile())
-    
-    # DEPRECATED
-    def seekFile(self, position):
-        return self._sendCommand(self._protocol.SeekFile(position=position))
-        
-    # DEPRECATED
-    def filePosition(self):
-        return self._sendCommand(self._protocol.FilePosition())
-   
-   # DEPRECATED
-    def deleteFile(self, filename):
-        self.openFile(filename)
-        self.removeFile()
-        self.closeFile()
-
     def getFile(self, filename, progress=None):
 
         file_id = self.get_file_id(filename)
@@ -833,8 +793,8 @@ class Device(KVObject):
             raise IOError("Firmware image not found")
         
         # delete old firmware
-        self.openFile("firmware.bin")
-        self.removeFile()
+        file_id = self.get_file_id("firmware.bin")
+        self.remove_file(file_id)
         
         # read firmware data
         f = open(fw_file, 'rb')

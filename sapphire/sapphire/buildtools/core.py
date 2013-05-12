@@ -305,6 +305,8 @@ class LibBuilder(Builder):
 class OSBuilder(LibBuilder):
     def __init__(self, *args, **kwargs):
         super(OSBuilder, self).__init__(*args, **kwargs)
+
+        self.includes.remove(self.settings["OS_PROJECT"])
  
 
 class HexBuilder(Builder):

@@ -10,9 +10,10 @@
 # </license>
 #
 
-import gevent
+import threading
+import time
 
-from Queue import Queue
+from Queue import Queue, Empty
 import logging
 import uuid
 import datetime
@@ -25,7 +26,7 @@ import json_codec
 from sapphire.core import settings
 
 
-class Publisher(gevent.Greenlet):
+class Publisher(threading.Thread):
     def __init__(self, object_manager):
         super(Publisher, self).__init__()
 
@@ -44,26 +45,26 @@ class Publisher(gevent.Greenlet):
 
         self._queue.put(json_codec.Encoder().encode(msg))
 
-    def _run(self):
+    def run(self):
         logging.info("ObjectPublisher started, server: %s" % (settings.BROKER_HOST))
 
         try:
             while self._running or not self._queue.empty():
                 try:
-                    o = self._queue.get()
+                    o = self._queue.get(True, 1.0)
 
                     self.client.publish("sapphire_objects", o)
 
                 except redis.ConnectionError as e:
                     logging.info("Unable to connect to server, retrying...")
                     logging.error(e)
-                    gevent.sleep(4.0)
+                    time.sleep(4.0)
+
+                except Empty:
+                    pass
 
                 except Exception as e:
                     logging.error("ObjectPublisher unexpected exception: %s", str(e))
-
-        except gevent.GreenletExit:
-            pass
 
         except Exception as e:
             logging.critical("ObjectPublisher failed with: %s", str(e))
@@ -73,11 +74,8 @@ class Publisher(gevent.Greenlet):
     def stop(self):
         self._running = False
 
-        if self._queue.empty():
-            self.kill()
 
-
-class Subscriber(gevent.Greenlet):
+class Subscriber(threading.Thread):
     def __init__(self, object_manager):
         super(Subscriber, self).__init__()
 
@@ -93,13 +91,13 @@ class Subscriber(gevent.Greenlet):
         if msg["origin_id"] == origin.id:
             # don't process messages from us
             return
-
+        
         # check methods
         if msg["method"] == "publish":
             self.object_manager.update(msg["data"])
-
-        elif msg["method"] == "event":
-            self.object_manager.receive_event(msg["data"])
+        
+        elif msg["method"] == "events":
+            self.object_manager.receive_events(msg["data"])
 
         elif msg["method"] == "delete":
             self.object_manager.delete(msg["data"]["object_id"])
@@ -107,8 +105,8 @@ class Subscriber(gevent.Greenlet):
         elif msg["method"] == "request_objects":
             logging.debug("Received request for objects")
             self.object_manager.publish_objects()
-
-    def _run(self):
+        
+    def run(self):
         logging.info("ObjectSubscriber started, server: %s" % (settings.BROKER_HOST))
 
         try:
@@ -120,18 +118,18 @@ class Subscriber(gevent.Greenlet):
                     for msg in self.subscriber.listen():
                         if msg["type"] != "message":
                             continue
-
+                        
                         self._process_msg(json_codec.Decoder().decode(msg["data"]))
 
                 except redis.ConnectionError:
                     logging.info("Unable to connect to server, retrying...")
-                    gevent.sleep(4.0)
+                    time.sleep(4.0)
+
+                except AttributeError:
+                    pass
 
                 except Exception as e:
-                    logging.error("ObjectSubscriber unexpected exception: %s", str(e))
-
-        except gevent.GreenletExit:
-            pass
+                    logging.exception("ObjectSubscriber unexpected exception: %s", str(e))
 
         except Exception as e:
             logging.critical("ObjectSubscriber failed with: %s", str(e))
@@ -140,5 +138,7 @@ class Subscriber(gevent.Greenlet):
 
     def stop(self):
         self._running = False
-        self.kill()
+        
+        self.subscriber.unsubscribe()
+
 

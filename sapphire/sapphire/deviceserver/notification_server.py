@@ -10,8 +10,7 @@
 # </license>
 #
 
-import gevent
-
+import threading
 import logging
 import socket
 
@@ -25,7 +24,7 @@ from sapphire.devices.sapphiredata import NotificationField
 
 NOTIFICATION_SERVER_PORT = 59999
 
-class NotificationServer(gevent.Greenlet):
+class NotificationServer(threading.Thread):
     def __init__(self):
         super(NotificationServer, self).__init__()
                 
@@ -37,7 +36,7 @@ class NotificationServer(gevent.Greenlet):
 
         self.start()
     
-    def _run(self):
+    def run(self):
         logging.info("NotificationServer listening on: %s:%d" % \
                     (self.sock.getsockname()[0], self.sock.getsockname()[1]))
 

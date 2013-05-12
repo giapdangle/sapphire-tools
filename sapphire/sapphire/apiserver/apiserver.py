@@ -10,9 +10,6 @@
 # </license>
 #
 
-from gevent import pywsgi
-import gevent
-
 from events import EventQueue
 from sapphire.core import KVObjectsManager, KVObject, KVEvent, settings
 
@@ -21,6 +18,7 @@ import json
 import logging
 import datetime
 import time
+import threading
 
 import bottle
 from beaker.middleware import SessionMiddleware
@@ -204,7 +202,7 @@ def delete_object(collection=None, key=None):
     obj.delete()
 
 
-class SessionReaper(gevent.Greenlet):
+class SessionReaper(threading.Thread):
     def __init__(self, session):
         super(SessionReaper, self).__init__()
 
@@ -212,9 +210,9 @@ class SessionReaper(gevent.Greenlet):
 
         self.start()
     
-    def _run(self):
+    def run(self):
         while (time.time() - self.session['_accessed_time']) < 300:
-            gevent.sleep(30.0)
+            time.sleep(30.0)
 
         logging.debug("Reaping session: %s" % self.session.id)
         self.session.delete()
@@ -260,17 +258,18 @@ session_opts = {
     'session.auto': True
 }
 
-class APIServer(gevent.Greenlet):
-    def __init__(self, device=None):
+class APIServer(object):
+    def __init__(self):
         super(APIServer, self).__init__()
-
-        self.start()
     
-    def _run(self):
+    def run(self):
         logging.info("APIServer serving on interface: %s port: %d" % (INTERFACE[0], INTERFACE[1]))
 
         server_app = SessionMiddleware(bottle.app(), session_opts)
-        #bottle.run(app=server_app, host=INTERFACE[0], port=INTERFACE[1], server='gevent', quiet=settings.API_SERVER_QUIET)
-        bottle.run(app=server_app, host=INTERFACE[0], port=INTERFACE[1], server='gevent')
+        #bottle.run(app=server_app, host=INTERFACE[0], port=INTERFACE[1], server='paste', quiet=settings.API_SERVER_QUIET)
+
+        # NOTE: if daemon_threads is False, the server will tend to not terminate when requested
+        bottle.run(app=server_app, host=INTERFACE[0], port=INTERFACE[1], server='paste', daemon_threads=True)
         
     
+

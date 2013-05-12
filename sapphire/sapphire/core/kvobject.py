@@ -266,6 +266,9 @@ class KVObjectsManager(object):
     @staticmethod
     def start():
         with KVObjectsManager.__lock:
+        # this lock is not really needed here, since the start() method
+        # should only be called one time per process.
+
             settings.init()
 
             KVObjectsManager._publisher = Publisher(KVObjectsManager)
@@ -281,9 +284,8 @@ class KVObjectsManager(object):
 
     @staticmethod
     def request_objects():
-        with KVObjectsManager.__lock:
-            logging.debug("Requesting objects...")
-            KVObjectsManager._publisher.publish_method("request_objects")
+        logging.debug("Requesting objects...")
+        KVObjectsManager._publisher.publish_method("request_objects")
 
     @staticmethod
     def publish_objects():
@@ -302,16 +304,17 @@ class KVObjectsManager(object):
     def delete(object_id):
         with KVObjectsManager.__lock:
             if object_id in KVObjectsManager._objects:
-                obj = KVObjectsManager._objects[object_id]
                 logging.debug("Deleted object: %s" % (str(obj)))
+
+                obj = KVObjectsManager._objects[object_id]
                 del KVObjectsManager._objects[object_id]
           
     @staticmethod
     def update(data):
+        # reconstruct object
+        obj = KVObject().from_dict(data)
+
         with KVObjectsManager.__lock:
-            # reconstruct object
-            obj = KVObject().from_dict(data)
-        
             if obj.object_id in KVObjectsManager._objects:
                 # update object
                 for k, v in obj._attrs.iteritems():
@@ -368,16 +371,23 @@ class KVObjectsManager(object):
             
     @staticmethod
     def stop():
-        with KVObjectsManager.__lock:
-            KVObjectsManager.unpublish_objects()
+        KVObjectsManager.unpublish_objects()
 
-            KVObjectsManager._publisher.stop()
-            KVObjectsManager._subscriber.stop()
+        KVObjectsManager._publisher.stop()
+        KVObjectsManager._subscriber.stop()
 
     @staticmethod
-    def join():
-        with KVObjectsManager.__lock:
-            KVObjectsManager._publisher.join()
-            KVObjectsManager._subscriber.join()
+    def join():        
+        KVObjectsManager._publisher.join()
+        KVObjectsManager._subscriber.join()
 
+
+def start():
+    KVObjectsManager.start()
+
+def stop():
+    KVObjectsManager.stop()
+
+def query(**kwargs):
+    return KVObjectsManager.query(**kwargs)
 

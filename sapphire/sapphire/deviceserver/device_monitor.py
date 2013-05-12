@@ -133,7 +133,6 @@ class _DeviceMonitor(threading.Thread):
     def stop(self):
         logging.info("DeviceMonitor:%d shutting down" % (self.device.short_addr))
         self.running = False
-        self.kill()
 
 
 def stop():

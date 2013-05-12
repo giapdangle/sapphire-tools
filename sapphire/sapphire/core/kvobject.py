@@ -304,9 +304,10 @@ class KVObjectsManager(object):
     def delete(object_id):
         with KVObjectsManager.__lock:
             if object_id in KVObjectsManager._objects:
+                obj = KVObjectsManager._objects[object_id]
+
                 logging.debug("Deleted object: %s" % (str(obj)))
 
-                obj = KVObjectsManager._objects[object_id]
                 del KVObjectsManager._objects[object_id]
           
     @staticmethod

@@ -24,9 +24,11 @@ import bottle
 from beaker.middleware import SessionMiddleware
 
 API_SERVER_PORT = 8000
+API_SERVER_STATIC_ROOT = os.getcwd()
 
 try:
     API_SERVER_PORT = settings.API_SERVER_PORT
+    API_SERVER_STATIC_ROOT = settings.API_SERVER_STATIC_ROOT
 
 except:
     pass
@@ -64,11 +66,14 @@ class ApiServerJsonEncoder(json.JSONEncoder):
         else:
             return super(ApiServerJsonEncoder, self).default(obj)
 
-"""
+
 @bottle.get('/')
-def index():
-    return bottle.static_file("index.html", root=settings.API_SERVER_STATIC_ROOT)
-"""
+@bottle.get('/<file>')
+def index(file=None):
+    if not file:
+        return bottle.static_file("index.html", root=API_SERVER_STATIC_ROOT)
+
+    return bottle.static_file(file, root=API_SERVER_STATIC_ROOT)
 
 
 @bottle.get(API_PATH + '/debug')
@@ -264,6 +269,7 @@ class APIServer(object):
     
     def run(self):
         logging.info("APIServer serving on interface: %s port: %d" % (INTERFACE[0], INTERFACE[1]))
+        logging.info("Static root: %s" % (API_SERVER_STATIC_ROOT))
 
         server_app = SessionMiddleware(bottle.app(), session_opts)
         #bottle.run(app=server_app, host=INTERFACE[0], port=INTERFACE[1], server='paste', quiet=settings.API_SERVER_QUIET)

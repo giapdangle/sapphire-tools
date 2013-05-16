@@ -4,23 +4,19 @@ Sapphire Tools
 This repository contains the Python tools for the Sapphire wireless platform.
 
 
-
 Contents
 --------
 
-- **/apiserver** - REST API server
-- **/automaton** - Python automation API
-- **/buildtools** - Sapphire Operating System build tools
-- **/core** - Key-value server system core
-- **/devices** - Sapphire hardware device driver
-- **/deviceserver** - Key-value server module for Sapphire devices
-- **/tftp** - Generic TFTP client
+- **buildtools** - Sapphire Operating System build tools
+- **devices** - Sapphire hardware device driver
+- **deviceserver** - Key-value server module for Sapphire devices
+- **tftp** - Generic TFTP client
 
 
 Installation
 ------------
 
-pip install sapphire
+pip install sapphire-devices
 
 
 

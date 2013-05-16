@@ -155,6 +155,9 @@ class KVObject(object):
             else:
                 self.set(key, value)
 
+    def get(self, key):
+        return self._attrs[key]
+
     def set(self, key, value, timestamp=None):    
         with self._lock:
             # only add a new key if we are the originator of this object

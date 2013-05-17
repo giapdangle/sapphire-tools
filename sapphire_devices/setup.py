@@ -5,12 +5,12 @@ setup(
     name='sapphire-devices',
     
     version='0.9_dev_2',
-    
-    packages=['sapphire',
-              'sapphire.buildtools',
-              'sapphire.deviceserver',
-              'sapphire.devices',
-              'sapphire.tftp'],
+
+    packages=['sapphiredevices',
+              'sapphiredevices.buildtools',
+              'sapphiredevices.deviceserver',
+              'sapphiredevices.devices',
+              'sapphiredevices.tftp'],
 
     package_data={'sapphire.buildtools': ['settings.json', 'linker.x', 'project_template/*']},
 
@@ -25,7 +25,7 @@ setup(
     long_description=open('README.txt').read(),
 
     install_requires=[
-        "sapphire-kv >= 0.9_dev_2",
+        "sapphire >= 0.9_dev_2",
         "pyserial >= 2.6",
         "bitstring >= 3.0.2",
         "cmd2 >= 0.6.3",

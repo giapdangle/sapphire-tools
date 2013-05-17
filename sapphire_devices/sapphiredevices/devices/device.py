@@ -34,8 +34,6 @@ import hashlib
 import binascii
 from UserDict import DictMixin
 
-from sapphire.tftp import TftpClient
-
 from sapphire.core.store import Store
 
 from pydispatch import dispatcher

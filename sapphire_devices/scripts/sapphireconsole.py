@@ -14,8 +14,8 @@
 import threading
 
 from sapphire.core import KVObjectsManager
-from sapphire.devices import Device, DeviceUnreachableException
-from sapphire.devices import netscan
+from sapphiredevices.devices import Device, DeviceUnreachableException
+from sapphiredevices.devices import netscan
 
 import traceback
 import sys

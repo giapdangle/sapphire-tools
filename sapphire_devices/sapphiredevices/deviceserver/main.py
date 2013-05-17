@@ -13,7 +13,7 @@
 from sapphire.automaton import *
 
 import device_monitor
-from sapphire.devices.netscan import NetworkScanner
+from sapphiredevices.devices.netscan import NetworkScanner
 from sapphire.core.version import VERSION
 from sapphire.core.settings import get_app_dir
 from sapphire.core import settings

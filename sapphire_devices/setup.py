@@ -12,9 +12,10 @@ setup(
               'sapphiredevices.devices',
               'sapphiredevices.tftp'],
 
-    package_data={'sapphire.buildtools': ['settings.json', 'linker.x', 'project_template/*']},
+    package_data={'sapphiredevices.buildtools': ['settings.json', 'linker.x', 'project_template/*']},
 
     scripts=['scripts/sapphireconsole.py',
+             'scripts/sapphiremake.py',
              'scripts/sapphire_deviceserver.py',
              'scripts/sapphire_devicesetup.py'],
 

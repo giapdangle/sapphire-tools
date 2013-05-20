@@ -291,6 +291,14 @@ class Device(KVObject):
 
         self._keys[key].value = value
 
+    def batch_update(self, updates, timestamp=None):
+        self.setKV(**updates)
+
+        if timestamp == None:
+            self.updated_at = datetime.utcnow()
+        else:
+            self.updated_at = timestamp
+
     def publish(self):
         super(Device, self).publish()
 
@@ -534,6 +542,9 @@ class Device(KVObject):
                 # check status
                 if param.status >= 0:
                     self._keys[key]._value = kwargs[key]
+
+                    # set internal KVObject attributes
+                    self._attrs[key] = kwargs[key]
                 
                 else:
                     raise ValueError

@@ -85,13 +85,13 @@ class _DeviceMonitor(threading.Thread):
                     if (datetime.utcnow() - self.device._last_notification_timestamp) > timedelta(minutes=2):
                         logging.info("Device: %s watchdog timeout" % (self.device.device_id))
 
-                        self.device.device_status = "offline"
-                        logging.info("Device: %s offline" % (self.device.device_id))
-
                         # clear retry timeout so we'll try immediately
                         retry_timeout = 0
 
                         break
+
+                self.device.device_status = "offline"
+                logging.info("Device: %s offline" % (self.device.device_id))
 
             except DeviceUnreachableException:
                 logging.info("Device: %s unreachable" % (self.device.device_id))

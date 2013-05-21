@@ -528,7 +528,7 @@ class StructField(Field):
         s = self.name + ":\n"
 
         for field in self.fields.itervalues():
-            s += " " + field.name + " = " + str(field.value) + "\n"
+            s += " " + field.name + " = " + str(field) + "\n"
         
         if len(self.fields) == 0:
             s += " Empty"

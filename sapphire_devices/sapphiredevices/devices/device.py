@@ -701,38 +701,6 @@ class Device(KVObject):
 
         return data
 
-
-        """
-        
-        self.openFile(filename)
-
-        data = ""
-        pos = 0
-
-        while True:
-            if progress:
-                progress(pos)
-
-            new_data = self.readFile(pos)
-            
-            if new_data.position != pos:
-                raise IOError("Invalid position indicator")
-            
-            data += new_data.data
-
-            if len(new_data.data) < FILE_TRANSFER_LEN:
-                break
-            
-            pos += FILE_TRANSFER_LEN
-        
-        self.closeFile()
-        
-        if progress:
-            progress(len(data))
-
-        return data
-        """
-    
     def putFile(self, filename, data, progress=None):
         
         # get file id
@@ -758,28 +726,6 @@ class Device(KVObject):
         
         if progress:
             progress(len(data))
-
-
-        """
-        self.openFile(filename)
-        
-        pos = 0
-
-        while pos < len(data):
-            chunk = data[pos:pos + FILE_TRANSFER_LEN]
-            
-            if progress:
-                progress(pos, len(data))
-
-            self.writeFile(pos, chunk)
-
-            pos += FILE_TRANSFER_LEN
-        
-        if progress:
-            progress(len(data), len(data))
-
-        return self.closeFile()
-        """
 
     def listFiles(self):
         data = self.getFile("fileinfo")

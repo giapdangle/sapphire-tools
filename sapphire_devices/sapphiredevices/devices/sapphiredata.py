@@ -156,30 +156,6 @@ class NTPTimestampField(StructField):
 
         super(NTPTimestampField, self).__init__(fields=fields, **kwargs)
 
-class NotificationField(StructField):
-    def __init__(self, **kwargs):
-        fields = [Uint8Field(name="msg_type"),
-                  Uint8Field(name="flags"),
-                  Uint64Field(name="device_id"),
-                  NTPTimestampField(name="timestamp"),
-                  Uint8Field(name="group"),
-                  Uint8Field(name="id"),
-                  Uint8Field(name="data_type"),
-                  RawBinField(name="data")]
-        
-        super(NotificationField, self).__init__(fields=fields, **kwargs)
-    
-    def unpack(self, buffer):
-        super(NotificationField, self).unpack(buffer)
-        
-        # verify type
-        if self.msg_type != 1:
-            raise ValueError
-
-        self.data = sapphiretypes.getType(self.data_type).unpack(self.data)
-
-        return self
-
 class SubscriptionField(StructField):
     def __init__(self, **kwargs):
         fields = [Uint8Field(name="group"),

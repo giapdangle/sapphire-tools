@@ -51,25 +51,25 @@ class NetworkScanner(threading.Thread):
         
         self.scan_interval = scan_interval
         
-        self.running = True
+        self._stop_event = threading.Event()
 
         self.start()
 
     def run(self):
         logging.info("NetworkScanner started")
 
-        while self.running:
+        while not self._stop_event.is_set():
             try:
                 scan()
             
             except DeviceUnreachableException as e:
                 logging.info(e)
                 
-            time.sleep(self.scan_interval)
+            self._stop_event.wait(self.scan_interval)
                 
         logging.info("NetworkScanner stopped")
 
     def stop(self):
         logging.info("NetworkScanner shutting down")
-        self.running = False
+        self._stop_event.set()
 

@@ -30,7 +30,7 @@ def add_device(device):
     if device.device_id not in _monitors:
         logging.info("Adding device: %s" % (device.device_id))
 
-        _monitors[device.device_id] = _DeviceMonitor(device)
+        #_monitors[device.device_id] = _DeviceMonitor(device)
 
 def remove_device(device):
     logging.info("Removing device: %s" % (device.device_id))    

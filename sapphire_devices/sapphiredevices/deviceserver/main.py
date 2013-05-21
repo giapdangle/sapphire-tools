@@ -14,7 +14,6 @@ from sapphire.automaton import *
 
 import device_monitor
 from sapphiredevices.devices.netscan import NetworkScanner
-from sapphire.core.version import VERSION
 from sapphire.core.settings import get_app_dir
 from sapphire.core import settings
 
@@ -24,6 +23,8 @@ import os
 import sys
 import logging
 import argparse
+
+VERSION = 0.2
 
 
 def main():

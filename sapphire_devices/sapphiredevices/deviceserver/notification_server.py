@@ -27,7 +27,6 @@ NOTIFICATION_SERVER_PORT = 59999
 
 
 class NotificationProtocol(Protocol):
-
     class Notification0(Payload):
         msg_type = 1
         fields = [Uint8Field(name="flags"),

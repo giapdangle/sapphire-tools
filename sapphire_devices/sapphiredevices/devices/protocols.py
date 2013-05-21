@@ -86,45 +86,9 @@ class DeviceCommandProtocol(Protocol):
                   Uint32Field(name="length"),
                   RawBinField(name="data")]
 
-    class RemoveFileNew(Payload):
+    class RemoveFile(Payload):
         msg_type = 24
         fields = [Uint8Field(name="file_id")]
-
-    # DEPRECATED
-    class OpenFile(Payload):
-        msg_type = 11
-        fields = [StringField(length=64, name="name")]
-
-    # DEPRECATED
-    class CloseFile(Payload):
-        msg_type = 12
-        fields = []
-
-    # DEPRECATED
-    class ReadFile(Payload):
-        msg_type = 13
-        fields = [Uint32Field(name="position")]
-
-    # DEPRECATED
-    class WriteFile(Payload):
-        msg_type = 14
-        fields = [Uint32Field(name="position"),
-                  RawBinField(name="data")]
-
-    # DEPRECATED
-    class RemoveFile(Payload):
-        msg_type = 15
-        fields = []
-
-    # DEPRECATED
-    class SeekFile(Payload):
-        msg_type = 17
-        fields = [Uint32Field(name="position")]
-    
-    # DEPRECATED
-    class FilePosition(Payload):
-        msg_type = 18
-        fields = []
     
     class ResetCfg(Payload):
         msg_type = 32
@@ -148,22 +112,9 @@ class DeviceCommandProtocol(Protocol):
         msg_type = 81
         fields = [KVRequestArray(name="params")]
     
-    class SubscribeKV(Payload):
-        msg_type = 82
-        fields = [Uint8Field(name="group"),
-                  Uint8Field(name="id"),
-                  Ipv4Field(name="ip"),
-                  Uint16Field(name="port")]
-    
-    class ResetKVSubs(Payload):
-        msg_type = 83
-        fields = []
-    
-    class UnsubscribeKV(Payload):
-        msg_type = 84
-        fields = [Uint8Field(name="group"),
-                  Uint8Field(name="id"),
-                  Ipv4Field(name="ip"),
+    class SetKVServer(Payload):
+        msg_type = 85
+        fields = [Ipv4Field(name="ip"),
                   Uint16Field(name="port")]
 
     class SetSecurityKey(Payload):
@@ -212,45 +163,9 @@ class DeviceCommandResponseProtocol(Protocol):
         msg_type = 23
         fields = [Uint16Field(name="write_length")]
                   
-    class RemoveFileNew(Payload):
+    class RemoveFile(Payload):
         msg_type = 24
         fields = [Uint8Field(name="status")]
-
-    # DEPRECATED
-    class OpenFile(Payload):
-        msg_type = 11
-        fields = [Int8Field(name="status")]
-
-    # DEPRECATED
-    class CloseFile(Payload):
-        msg_type = 12
-        fields = []
-    
-    # DEPRECATED
-    class ReadFile(Payload):
-        msg_type = 13
-        fields = [Uint32Field(name="position"),
-                  RawBinField(name="data")]
-
-    # DEPRECATED
-    class WriteFile(Payload):
-        msg_type = 14
-        fields = []
-
-    # DEPRECATED
-    class RemoveFile(Payload):
-        msg_type = 15
-        fields = []
-
-    # DEPRECATED
-    class SeekFile(Payload):
-        msg_type = 17
-        fields = []
-    
-    # DEPRECATED
-    class FilePosition(Payload):
-        msg_type = 18
-        fields = [Uint32Field(name="position")]
 
     class GetCfgParam(Payload):
         msg_type = 30
@@ -280,16 +195,8 @@ class DeviceCommandResponseProtocol(Protocol):
         msg_type = 81
         fields = [KVParamArray(name="params")]
 
-    class SubscribeKV(Payload):
-        msg_type = 82
-        fields = []
-
-    class ResetKVSubs(Payload):
-        msg_type = 83
-        fields = []
-
-    class UnsubscribeKV(Payload):
-        msg_type = 84
+    class SetKVServer(Payload):
+        msg_type = 85
         fields = []
 
     class SetSecurityKey(Payload):

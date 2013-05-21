@@ -16,7 +16,7 @@ import logging
 from datetime import datetime, timedelta
 
 from sapphire.automaton import *
-from sapphire.devices import *
+from sapphiredevices.devices import *
 from sapphire.core import KVObjectsManager
 from notification_server import NOTIFICATION_SERVER_PORT
 

@@ -12,7 +12,7 @@
 
 import os
 
-from sapphire.buildtools import core
+from sapphiredevices.buildtools import core
 
 class FirmwareNotFoundException(Exception):
     def __init__(self, value = None):

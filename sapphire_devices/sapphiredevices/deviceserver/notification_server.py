@@ -15,10 +15,10 @@ import logging
 import socket
 
 from sapphire.core import KVObjectsManager
-from sapphire.devices.device import UnrecognizedKeyException
+from sapphiredevices.devices.device import UnrecognizedKeyException
 
-from sapphire.devices.udpx import ServerSocket
-from sapphire.devices.sapphiredata import NotificationField
+from sapphiredevices.devices.udpx import ServerSocket
+from sapphiredevices.devices.sapphiredata import NotificationField
 
 
 

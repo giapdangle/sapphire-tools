@@ -12,7 +12,7 @@
 # </license>
 #
 
-from sapphire.buildtools.core import main
+from sapphiredevices.buildtools.core import main
 
 if __name__ == "__main__":
     main()

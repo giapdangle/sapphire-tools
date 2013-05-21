@@ -11,7 +11,7 @@
 # </license>
 #
 
-from sapphire.deviceserver.main import main
+from sapphiredevices.deviceserver.main import main
 
 if __name__ == "__main__":
     main()

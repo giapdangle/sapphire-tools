@@ -94,7 +94,7 @@ class NotificationServer(threading.Thread):
             except socket.timeout:
                 pass
         
-        logging.info("NoticationServer stopped")
+        logging.info("NotificationServer stopped")
         
     def stop(self):
         logging.info("NoticationServer shutting down")

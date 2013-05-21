@@ -62,13 +62,13 @@ class _DeviceMonitor(threading.Thread):
 
         while self.running:
             try:
-                retry_timeout = 60.0
+                retry_timeout = 60
 
                 self.set_server()
 
                 self.scan()
 
-                self.device.last_notification_timestamp = datetime.utcnow()
+                self.device._last_notification_timestamp = datetime.utcnow()
                 self.device.notify()
 
                 # device is online
@@ -78,15 +78,20 @@ class _DeviceMonitor(threading.Thread):
                 while self.device.device_status == "online":
                     time.sleep(1.0)
 
+                    if not self.running:
+                        break
+
                     # check last notification time
-                    if (datetime.utcnow() - self.device.last_notification_timestamp) > timedelta(minutes=2):
+                    if (datetime.utcnow() - self.device._last_notification_timestamp) > timedelta(minutes=2):
                         logging.info("Device: %s watchdog timeout" % (self.device.device_id))
 
                         self.device.device_status = "offline"
                         logging.info("Device: %s offline" % (self.device.device_id))
 
                         # clear retry timeout so we'll try immediately
-                        retry_timeout = 0.0
+                        retry_timeout = 0
+
+                        break
 
             except DeviceUnreachableException:
                 logging.info("Device: %s unreachable" % (self.device.device_id))
@@ -101,6 +106,9 @@ class _DeviceMonitor(threading.Thread):
 
                 # check status
                 if self.device.device_status == "online":
+                    break
+
+                if not self.running:
                     break
             
 

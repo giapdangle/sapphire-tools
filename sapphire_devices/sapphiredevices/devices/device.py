@@ -246,7 +246,7 @@ class Device(KVObject):
         self.name = "<anon@%d>" % (short_addr)
 
         self.device_status = 'offline'
-        self.last_notification_timestamp = NTP_EPOCH
+        self._last_notification_timestamp = NTP_EPOCH
 
         self.collection = "devices"
         self.object_id = str(self.device_id)
@@ -335,7 +335,7 @@ class Device(KVObject):
         self.set(key, value, timestamp=timestamp)
 
         # set last received notification timestamp
-        self.last_notification_timestamp = datetime.utcnow()
+        self._last_notification_timestamp = datetime.utcnow()
         
         # check if boot_mode
         if key == 'boot_mode':
@@ -821,7 +821,7 @@ class Device(KVObject):
         return response
 
     def set_kv_server(self, ip='0.0.0.0', port=0):
-        return self._sendCommand(self._protocol.SetKVServer(ip, port))
+        return self._sendCommand(self._protocol.SetKVServer(ip=ip, port=port))
 
 
     ##########################

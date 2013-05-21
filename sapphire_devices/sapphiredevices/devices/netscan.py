@@ -30,10 +30,14 @@ def scan():
 
     devices = list()
 
-    for g in gateways:
-        devices.extend(g.getDevices())        
-
     devices.extend(gateways)
+
+    try:
+        for g in gateways:
+            devices.extend(g.getDevices())        
+
+    except:
+        pass
 
     for device in devices:
         # check if device has been published

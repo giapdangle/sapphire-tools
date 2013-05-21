@@ -246,12 +246,12 @@ class Device(KVObject):
         self.name = "<anon@%d>" % (short_addr)
 
         self.device_status = 'offline'
+        self._last_notification_timestamp = NTP_EPOCH
 
         self.collection = "devices"
         self.object_id = str(self.device_id)
         
         self._keys = KVMeta()
-        self._subs = []
         self._firmware_info_hash = None
         
         self._channel = comm_channel
@@ -333,10 +333,19 @@ class Device(KVObject):
         value = msg.data.value
         self._keys[key]._value = value
         self.set(key, value, timestamp=timestamp)
+
+        # set last received notification timestamp
+        self._last_notification_timestamp = datetime.utcnow()
         
         # check if boot_mode
         if key == 'boot_mode':
             self.device_status = "offline"
+
+        elif self.device_status != "online":
+            self.device_status = "online"
+
+        # push notifications to KV system
+        self.notify()
         
     def scan(self):
         self.getFirmwareInfo()
@@ -459,30 +468,6 @@ class Device(KVObject):
         for kv in kvmeta:
             self._keys[kv.param_name] = KVKey(key=kv.param_name, device=self, group=kv.group, id=kv.id, flags=kv.flags, type=kv.type)
     
-    # get KV subscriptions
-    # this will fail if we don't have KV meta data
-    def getKVSubs(self):
-        data = self.getFile("kvsubs")
-        kvsubs = sapphiredata.SubscriptionArray().unpack(data)
-        
-        # reset subs
-        self._subs = []
-        
-        # add subscriptions to list
-        for sub in kvsubs:
-            try:
-                # translate the ID and group to a name
-                key = self.translateKey(sub.group, sub.id)
-
-                # build a dictionary from the raw meta data.
-                sub_dict = {'key': key, 'ip': sub.ip, 'port': sub.port}
-            
-                # add to list
-                self._subs.append(sub_dict)
-
-            except KeyError:
-                logging.warn("Could not translate key for sub: %s" % (str(sub)))
-
     def getAllKV(self):
         keys = [key for key in self._keys]
         
@@ -701,38 +686,6 @@ class Device(KVObject):
 
         return data
 
-
-        """
-        
-        self.openFile(filename)
-
-        data = ""
-        pos = 0
-
-        while True:
-            if progress:
-                progress(pos)
-
-            new_data = self.readFile(pos)
-            
-            if new_data.position != pos:
-                raise IOError("Invalid position indicator")
-            
-            data += new_data.data
-
-            if len(new_data.data) < FILE_TRANSFER_LEN:
-                break
-            
-            pos += FILE_TRANSFER_LEN
-        
-        self.closeFile()
-        
-        if progress:
-            progress(len(data))
-
-        return data
-        """
-    
     def putFile(self, filename, data, progress=None):
         
         # get file id
@@ -758,28 +711,6 @@ class Device(KVObject):
         
         if progress:
             progress(len(data))
-
-
-        """
-        self.openFile(filename)
-        
-        pos = 0
-
-        while pos < len(data):
-            chunk = data[pos:pos + FILE_TRANSFER_LEN]
-            
-            if progress:
-                progress(pos, len(data))
-
-            self.writeFile(pos, chunk)
-
-            pos += FILE_TRANSFER_LEN
-        
-        if progress:
-            progress(len(data), len(data))
-
-        return self.closeFile()
-        """
 
     def listFiles(self):
         data = self.getFile("fileinfo")
@@ -836,71 +767,6 @@ class Device(KVObject):
         self.os_version         = fw_info.os_version
     
         return fw_info
-
-    def subscribeKV(self, param, ip="0.0.0.0", port=None):
-        try:    
-            group = self._keys[param]['group']
-            id = self._keys[param]['id']
-        
-        except KeyError:
-            group = kv_groups[param]
-            id = KV_ID_ALL
-
-        cmd = self._protocol.SubscribeKV(group=group, 
-                                        id=id, 
-                                        ip=ip, 
-                                        port=port)
-
-        response = self._sendCommand(cmd)
-        
-        # build a dictionary from the raw meta data
-        sub_dict = {'key': param, 'ip': ip, 'port': port}
-        
-        # check if sub is already in the list
-        matching_subs = [sub for sub in self._subs 
-                            if sub['key'] == sub_dict['key']
-                                and sub['ip'] == sub_dict['ip']
-                                and sub['port'] == sub_dict['port']]
-        
-        if len(matching_subs) == 0:
-            # add sub to list
-            self._subs.append(sub_dict)
-
-        return response
-
-    def unsubscribeKV(self, param, ip="0.0.0.0", port=None):
-        try:    
-            group = self._keys[param]['group']
-            id = self._keys[param]['id']
-        
-        except KeyError:
-            group = kv_groups[param]
-            id = KV_ID_ALL
-
-        cmd = self._protocol.UnsubscribeKV(group=group, 
-                                          id=id, 
-                                          ip=ip, 
-                                          port=port)
-
-        response = self._sendCommand(cmd)
-        
-        # build a dictionary from the raw meta data
-        sub_dict = {'key': param, 'ip': ip, 'port': port}
-
-        # remove this subscription from the local cache
-        self._subs = [sub for sub in self._subs
-                        if sub['key'] != sub_dict['key']
-                            or sub['ip'] != sub_dict['ip']
-                            or sub['port'] != sub_dict['port']]
-
-        return response
-
-    def resetKVSubs(self):
-        response = self._sendCommand(self._protocol.ResetKVSubs())
-        
-        self.kvsubs = []
-
-        return response
     
     def reset_time_sync(self):
         response = self._sendCommand(self._protocol.ResetWcomTimeSync())
@@ -945,13 +811,6 @@ class Device(KVObject):
         
         return info
 
-    def get_sub_info(self):
-        data = self.getFile("kvsubs")
-        info = sapphiredata.SubscriptionArray()
-        info.unpack(data)
-        
-        return info
-
     def request_route(self, ip='0.0.0.0', short_addr=0):
         #query_field = RouteQueryField(dest_ip=ip, dest_short=short_addr)
         #print query_field
@@ -960,6 +819,10 @@ class Device(KVObject):
         response = self._sendCommand(self._protocol.RequestRoute(dest_ip=ip, dest_short=short_addr))
 
         return response
+
+    def set_kv_server(self, ip='0.0.0.0', port=0):
+        return self._sendCommand(self._protocol.SetKVServer(ip=ip, port=port))
+
 
     ##########################
     # Command Line Interface
@@ -1242,21 +1105,6 @@ class Device(KVObject):
 
         return s
 
-    def cli_subscribekv(self, line):
-        tokens = line.split()
-        param = tokens[0]
-        host = tokens[1]
-        port = int(tokens[2])
-
-        self.subscribeKV(param, host, port)
-        
-        return ""
-    
-    def cli_resetkvsubs(self, line):
-        self.resetKVSubs()
-
-        return ""
-
     def cli_getkey(self, line):
         if line == "":
             keys = self._keys
@@ -1437,29 +1285,6 @@ class Device(KVObject):
 
         return s
 
-    def cli_subinfo(self, line):
-        info = self.get_sub_info()
-        
-        s = "\nIP              Port  Group ID\n"
-             #"111.222.333.444 00000 000   000"
-        
-        for n in info:
-            group = str(n.group)
-            if n.group == 255:
-                group = "all"
-
-            id = str(n.group)
-            if n.id == 255:
-                id = "all"
-
-            s += "%15s %5d %3s   %3s\n" % \
-                (n.ip,
-                 n.port,
-                 group,
-                 id)
-                 
-        return s
-
     def cli_resettimesync(self, line):
         self.reset_time_sync()
 
@@ -1478,11 +1303,16 @@ class Device(KVObject):
 
         else:
             self.request_route(short_addr=line)
-        
+    
+    def cli_setkvserver(self, line):
+        tokens = line.split()
+
+        self.set_kv_server(tokens[0], tokens[1])
+
+        return "OK"
 
 
 import gateway
-
 
 def createDevice(**kwargs):
     

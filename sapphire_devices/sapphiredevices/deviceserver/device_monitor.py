@@ -35,32 +35,9 @@ def add_device(device):
 def remove_device(device):
     logging.info("Removing device: %s" % (device.device_id))    
 
-def found_device(device):
-    pass
-    # check if device has been published
-    #if len(KVObjectsManager.query(device_id=device.device_id)) == 0:
-        # device.publish()        
-
 dispatcher.connect(add_device, signal=SIGNAL_ADD_DEVICE)
 dispatcher.connect(remove_device, signal=SIGNAL_REMOVE_DEVICE)
-dispatcher.connect(found_device, signal=SIGNAL_FOUND_DEVICE)
 
-
-# Device attach event handling
-# These come as notifications from the gateway
-class DeviceAttachTrigger(Trigger):
-    def condition(self, event):
-        return event.key == "device_attach"
-
-class DeviceAttachAction(Action):
-    def action(self, event):
-        # query for device by short address
-        device = Universe().query(short_addr=event.device_attach)
-
-        # notify device monitor
-        _monitors[device.device_id].attach()
-
-Macro(triggers=DeviceAttachTrigger(), actions=DeviceAttachAction())
 
 
 class _DeviceMonitor(threading.Thread):
@@ -68,25 +45,16 @@ class _DeviceMonitor(threading.Thread):
         super(_DeviceMonitor, self).__init__()
         
         self.device = device
-        self.attach_event = threading.Event()
         
         self.running = True
 
         self.start()
     
-    def subscribe_notifications(self):    
-        self.device.subscribeKV("kv_group_all", port=NOTIFICATION_SERVER_PORT)
-    
-    def unsubscribe_notifications(self):
-        self.device.unsubscribeKV("kv_group_all", port=NOTIFICATION_SERVER_PORT)
-
-    def attach(self):
-        logging.info("Attach: %s" % (self.device.device_id))
-        self.attach_event.set()
+    def set_server(self):
+        self.device.set_kv_server(port=NOTIFICATION_SERVER_PORT)
 
     def scan(self):
         self.device.scan()
-        self.subscribe_notifications()
         self.device.getAllKV()
 
     def run(self):
@@ -94,7 +62,14 @@ class _DeviceMonitor(threading.Thread):
 
         while self.running:
             try:
+                retry_timeout = 60
+
+                self.set_server()
+
                 self.scan()
+
+                self.device._last_notification_timestamp = datetime.utcnow()
+                self.device.notify()
 
                 # device is online
                 logging.info("Device: %s online" % (self.device.device_id))
@@ -103,30 +78,39 @@ class _DeviceMonitor(threading.Thread):
                 while self.device.device_status == "online":
                     time.sleep(1.0)
 
-                    # check heartbeat
-                    #if (datetime.utcnow() - self.device.updated_at) > timedelta(minutes=2):
-                    #    logging.info("Device: %s watchdog timeout" % (self.device.device_id))            
+                    if not self.running:
+                        break
 
-                    #    self.device.device_status = "offline"
-                    #    logging.info("Device: %s offline" % (self.device.device_id))
+                    # check last notification time
+                    if (datetime.utcnow() - self.device._last_notification_timestamp) > timedelta(minutes=2):
+                        logging.info("Device: %s watchdog timeout" % (self.device.device_id))
 
-                        # set the attach event now so we'll attempt to scan immediately
-                    #    self.attach_event.set()
+                        # clear retry timeout so we'll try immediately
+                        retry_timeout = 0
+
+                        break
+
+                self.device.device_status = "offline"
+                logging.info("Device: %s offline" % (self.device.device_id))
 
             except DeviceUnreachableException:
-                #logging.info("Device: %s unreachable" % (self.device.device_id))
+                logging.info("Device: %s unreachable" % (self.device.device_id))
                 pass
 
             except Exception as e:
                 logging.error("DeviceMonitor: %s raised exception: %s: %s" % (self.device.device_id, type(e), e))
 
-            # wait for attach, or time delay to expire
-            self.attach_event.wait(60.0)
-            self.attach_event.clear()
-            
-            #logging.info("Retrying device: %s" % (self.device.device_id))                
+            # wait up to retry_timeout seconds before retrying device
+            for i in xrange(retry_timeout):
+                time.sleep(1.0)
 
-        self.unsubscribe_notifications()
+                # check status
+                if self.device.device_status == "online":
+                    break
+
+                if not self.running:
+                    break
+            
 
         logging.info("DeviceMonitor:%d stopped" % (self.device.device_id))
 

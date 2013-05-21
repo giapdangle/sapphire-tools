@@ -656,7 +656,7 @@ class Device(KVObject):
         return result.write_length
 
     def remove_file(self, file_id):
-        result = self._sendCommand(self._protocol.RemoveFileNew(file_id=file_id))
+        result = self._sendCommand(self._protocol.RemoveFile(file_id=file_id))
         
         if result.status < 0:
             raise IOError("File: %s not deleted" % (file_id))

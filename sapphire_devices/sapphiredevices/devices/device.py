@@ -213,9 +213,6 @@ class KVMeta(DictMixin):
                 raise DuplicateKeyIDException("DuplicateKeyIDException: %s" % (key))
         
 
-import threading
-_my_lock = threading.Lock()
-
 
 class Device(KVObject):
     
@@ -229,8 +226,6 @@ class Device(KVObject):
                  gateway=None):
         
         super(Device, self).__init__()
-
-        self._my_lock = _my_lock
 
         self.host = host
         self.firmware_id = None
@@ -343,8 +338,6 @@ class Device(KVObject):
         return self
     
     def _sendCommand(self, cmd):
-        #self._my_lock.acquire()
-
         try:
             self._channel.write(cmd.pack())
             
@@ -357,15 +350,11 @@ class Device(KVObject):
             if self.device_status == 'online':
                 self.device_status = 'offline'
 
-            #self._my_lock.release()
             raise DeviceUnreachableException("Device:%d" % (self.short_addr))
         
-
-        
+                
         #return self._response_protocol.unpack(data)
-        #self._my_lock.acquire()
         response = self._response_protocol.unpack(data)
-        #self._my_lock.release()
 
         if len(data) != response.size():
             print "Cmd response: %s : %4d" % (self.host, len(data))
@@ -383,8 +372,6 @@ class Device(KVObject):
 
 
             raise ValueError
-
-        #self._my_lock.release()
         
         return response
 
@@ -486,12 +473,16 @@ class Device(KVObject):
 
         # send each batch
         for batch in batches:
-            cmd = self._protocol.SetKV(params=batch)
+            #cmd = self._protocol.SetKV(params=batch)
+            cmd = self._protocol.SetKV(data=batch.pack())
             
-            response = self._sendCommand(cmd)
+            #response = self._sendCommand(cmd)
+            response_msg = self._sendCommand(cmd)
+            response = sapphiredata.KVStatusArray().unpack(response_msg.data)
         
             # parse responses
-            for param in response.params:
+            #for param in response.params:
+            for param in response:
                 key = keys[(param.group, param.id)]
                 
                 # check status
@@ -541,7 +532,8 @@ class Device(KVObject):
         
         # request each batch
         for batch in batches:
-            cmd = self._protocol.GetKV(params=batch)
+            #cmd = self._protocol.GetKV(params=batch)
+            cmd = self._protocol.GetKV(params=batch.pack())
 
             #response = self._sendCommand(cmd)
             response_msg = self._sendCommand(cmd)

@@ -215,7 +215,7 @@ class KVMeta(DictMixin):
 
 class Device(KVObject):
     import threading
-    _lock = threading.Lock()
+    _my_lock = threading.Lock()
 
     def __init__(self, 
                  host=None, 
@@ -339,7 +339,7 @@ class Device(KVObject):
         return self
     
     def _sendCommand(self, cmd):
-        with Device._lock:
+        with Device._my_lock:
             try:
                 self._channel.write(cmd.pack())
                 

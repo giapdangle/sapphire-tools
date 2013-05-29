@@ -36,13 +36,8 @@ from UserDict import DictMixin
 
 from sapphire.core.store import Store
 
-from pydispatch import dispatcher
 
 NTP_EPOCH = datetime(1900, 1, 1)
-
-
-SIGNAL_ADD_DEVICE = "signal_add_device"
-SIGNAL_REMOVE_DEVICE = "signal_remove_device"
 
 
 FILE_TRANSFER_LEN   = 512
@@ -110,11 +105,6 @@ CLI_PREFIX = 'cli_'
 
 DeviceStatus = set(['unknown', 'offline', 'online', 'reboot'])
 
-class RpcMethodNotFoundException(Exception):
-    pass
-
-class RpcInvalidParameterException(Exception):
-    pass
 
 class DeviceUnreachableException(Exception):
     pass
@@ -223,7 +213,9 @@ class KVMeta(DictMixin):
                 raise DuplicateKeyIDException("DuplicateKeyIDException: %s" % (key))
         
 
+
 class Device(KVObject):
+    
     def __init__(self, 
                  host=None, 
                  short_addr=0,
@@ -266,11 +258,6 @@ class Device(KVObject):
         self._protocol = command_protocol()
         self._response_protocol = response_protocol()
         
-        self._rpc_methods = [
-                "scan",
-                "reboot",
-                "safeMode" ]
-
     def __str__(self):
         return "Device:%16s" % (self.device_id)
     
@@ -289,7 +276,7 @@ class Device(KVObject):
     def update(self, key, value, timestamp=None):
         super(Device, self).update(key, value, timestamp=timestamp)
 
-        self._keys[key].value = value
+        self.setKey(key, value)
 
     def batch_update(self, updates, timestamp=None):
         self.setKV(**updates)
@@ -298,16 +285,6 @@ class Device(KVObject):
             self.updated_at = datetime.utcnow()
         else:
             self.updated_at = timestamp
-
-    def publish(self):
-        super(Device, self).publish()
-
-        dispatcher.send(signal=SIGNAL_ADD_DEVICE, device=self)
-
-    def delete(self):
-        super(Device, self).delete()
-
-        dispatcher.send(signal=SIGNAL_REMOVE_DEVICE, device=self)
 
     def receive_notification(self, msg):
         # verify address
@@ -375,54 +352,20 @@ class Device(KVObject):
 
             raise DeviceUnreachableException("Device:%d" % (self.short_addr))
         
-        return self._response_protocol.unpack(data)
+                
+        #return self._response_protocol.unpack(data)
+        response = self._response_protocol.unpack(data)
+
+        if len(data) != response.size():
+            raise ValueError
+        
+        return response
 
     def get_cli(self):
         return [f.replace(CLI_PREFIX, '', 1) for f in dir(self) 
                 if f.startswith(CLI_PREFIX)
                 and not f.startswith('_') 
                 and isinstance(self.__getattribute__(f), types.MethodType)]
-
-    def getRpc(self):
-        
-        rpc_commands = []
-
-        for method in self._rpc_methods:
-            f = getattr(self, method)
-            args = [arg for arg in inspect.getargspec(f).args if arg != 'self']
-            
-            if len(args) > 0:
-                rpc_commands.append({"name": method, "params": args})
-
-            else:
-                rpc_commands.append({"name": method})
-
-        return rpc_commands
-
-    def callRpc(self, command, params):
-        # look up method
-        try:
-            f = getattr(self, command)
-
-        except AttributeError:
-            raise RpcMethodNotFoundException
-
-        args = [arg for arg in inspect.getargspec(f).args if arg != 'self']
-        
-        # build argument list
-        cmd_args = []
-        
-        try:
-            for arg in args:
-                cmd_args.append(params[arg])
-       
-        except KeyError:
-            raise RpcInvalidParameterException
-
-        # call method
-        result = f(*cmd_args)
-
-        return result
     
     # translate the ID and group to a name
     def translateKey(self, group, id):
@@ -516,12 +459,16 @@ class Device(KVObject):
 
         # send each batch
         for batch in batches:
-            cmd = self._protocol.SetKV(params=batch)
+            #cmd = self._protocol.SetKV(params=batch)
+            cmd = self._protocol.SetKV(data=batch.pack())
             
-            response = self._sendCommand(cmd)
+            #response = self._sendCommand(cmd)
+            response_msg = self._sendCommand(cmd)
+            response = sapphiredata.KVStatusArray().unpack(response_msg.data)
         
             # parse responses
-            for param in response.params:
+            #for param in response.params:
+            for param in response:
                 key = keys[(param.group, param.id)]
                 
                 # check status
@@ -571,18 +518,22 @@ class Device(KVObject):
         
         # request each batch
         for batch in batches:
-            cmd = self._protocol.GetKV(params=batch)
+            #cmd = self._protocol.GetKV(params=batch)
+            cmd = self._protocol.GetKV(data=batch.pack())
 
-            response = self._sendCommand(cmd)
+            #response = self._sendCommand(cmd)
+            response_msg = self._sendCommand(cmd)
+            response = sapphiredata.KVParamArray().unpack(response_msg.data)
 
             # parse responses
-            for param in response.params:
+            #for param in response.params:
+            for param in response:
                 key = keys[(param.group, param.id)]
+
                 responses[key] = param.param_value
                 
                 # update internal meta data
                 self._keys[key]._value = param.param_value
-
 
                 # TODO: hack to avoid clearing the device id
                 if key != "device_id":
@@ -1323,19 +1274,5 @@ def createDevice(**kwargs):
         return gateway.Gateway(**kwargs)
 
     return Device(**kwargs)
-    
-if __name__ == '__main__':
-    
-    d = Device(host="192.168.11.83")
-    #d = Device(host="/dev/tty.PL2303-000012FD")
-
-    #print d.echo("Jeremy Rocks!")
-    #print d.status()
-    #d.getFile("firmware.bin")
-    
-    #d.listFiles()
-    
-    print d.routeInfo()[0]
-    print d.neighborInfo()[0]
     
 

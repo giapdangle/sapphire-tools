@@ -106,11 +106,13 @@ class DeviceCommandProtocol(Protocol):
     
     class SetKV(Payload):
         msg_type = 80
-        fields = [KVParamArray(name="params")]
+        #fields = [KVParamArray(name="params")]
+        fields = [RawBinField(name="data")]
 
     class GetKV(Payload):
         msg_type = 81
-        fields = [KVRequestArray(name="params")]
+        #fields = [KVRequestArray(name="params")]
+        fields = [RawBinField(name="data")]
     
     class SetKVServer(Payload):
         msg_type = 85
@@ -189,11 +191,13 @@ class DeviceCommandResponseProtocol(Protocol):
 
     class SetKV(Payload):
         msg_type = 80
-        fields = [KVStatusArray(name="params")]
+        #fields = [KVStatusArray(name="params")]
+        fields = [RawBinField(name="data")]
 
     class GetKV(Payload):
         msg_type = 81
-        fields = [KVParamArray(name="params")]
+        #fields = [KVParamArray(name="params")]
+        fields = [RawBinField(name="data")]
 
     class SetKVServer(Payload):
         msg_type = 85

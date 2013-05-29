@@ -42,7 +42,7 @@ def scan():
     for device in devices:
         # check if device has been published
         if len(KVObjectsManager.query(device_id=device.device_id)) == 0:
-            device.publish()   
+            device.notify()   
             
         dispatcher.send(signal=SIGNAL_FOUND_DEVICE, device=device)
 

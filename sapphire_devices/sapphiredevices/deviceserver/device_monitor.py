@@ -26,17 +26,13 @@ _monitors = dict()
 
 # add/remove event handling
 # these events come from netscan, which uses the dispatcher
-def add_device(device):
+def found_device(device):
     if device.device_id not in _monitors:
         logging.info("Adding device: %s" % (device.device_id))
 
         _monitors[device.device_id] = _DeviceMonitor(device)
 
-def remove_device(device):
-    logging.info("Removing device: %s" % (device.device_id))    
-
-dispatcher.connect(add_device, signal=SIGNAL_ADD_DEVICE)
-dispatcher.connect(remove_device, signal=SIGNAL_REMOVE_DEVICE)
+dispatcher.connect(found_device, signal=SIGNAL_FOUND_DEVICE)
 
 
 
@@ -98,7 +94,8 @@ class _DeviceMonitor(threading.Thread):
                 pass
 
             except Exception as e:
-                logging.error("DeviceMonitor: %s raised exception: %s: %s" % (self.device.device_id, type(e), e))
+                raise
+                #logging.error("DeviceMonitor: %s raised exception: %s: %s" % (self.device.device_id, type(e), e))
 
             # wait up to retry_timeout seconds before retrying device
             for i in xrange(retry_timeout):

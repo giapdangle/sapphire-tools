@@ -246,6 +246,4 @@ if __name__ == '__main__':
         while c != None:
             c = c.cmdloop()
             
-        
-
 

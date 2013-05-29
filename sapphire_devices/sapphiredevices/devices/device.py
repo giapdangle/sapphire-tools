@@ -110,11 +110,6 @@ CLI_PREFIX = 'cli_'
 
 DeviceStatus = set(['unknown', 'offline', 'online', 'reboot'])
 
-class RpcMethodNotFoundException(Exception):
-    pass
-
-class RpcInvalidParameterException(Exception):
-    pass
 
 class DeviceUnreachableException(Exception):
     pass
@@ -266,11 +261,6 @@ class Device(KVObject):
         self._protocol = command_protocol()
         self._response_protocol = response_protocol()
         
-        self._rpc_methods = [
-                "scan",
-                "reboot",
-                "safeMode" ]
-
     def __str__(self):
         return "Device:%16s" % (self.device_id)
     
@@ -382,47 +372,6 @@ class Device(KVObject):
                 if f.startswith(CLI_PREFIX)
                 and not f.startswith('_') 
                 and isinstance(self.__getattribute__(f), types.MethodType)]
-
-    def getRpc(self):
-        
-        rpc_commands = []
-
-        for method in self._rpc_methods:
-            f = getattr(self, method)
-            args = [arg for arg in inspect.getargspec(f).args if arg != 'self']
-            
-            if len(args) > 0:
-                rpc_commands.append({"name": method, "params": args})
-
-            else:
-                rpc_commands.append({"name": method})
-
-        return rpc_commands
-
-    def callRpc(self, command, params):
-        # look up method
-        try:
-            f = getattr(self, command)
-
-        except AttributeError:
-            raise RpcMethodNotFoundException
-
-        args = [arg for arg in inspect.getargspec(f).args if arg != 'self']
-        
-        # build argument list
-        cmd_args = []
-        
-        try:
-            for arg in args:
-                cmd_args.append(params[arg])
-       
-        except KeyError:
-            raise RpcInvalidParameterException
-
-        # call method
-        result = f(*cmd_args)
-
-        return result
     
     # translate the ID and group to a name
     def translateKey(self, group, id):
@@ -582,7 +531,6 @@ class Device(KVObject):
                 
                 # update internal meta data
                 self._keys[key]._value = param.param_value
-
 
                 # TODO: hack to avoid clearing the device id
                 if key != "device_id":
@@ -1323,19 +1271,5 @@ def createDevice(**kwargs):
         return gateway.Gateway(**kwargs)
 
     return Device(**kwargs)
-    
-if __name__ == '__main__':
-    
-    d = Device(host="192.168.11.83")
-    #d = Device(host="/dev/tty.PL2303-000012FD")
-
-    #print d.echo("Jeremy Rocks!")
-    #print d.status()
-    #d.getFile("firmware.bin")
-    
-    #d.listFiles()
-    
-    print d.routeInfo()[0]
-    print d.neighborInfo()[0]
     
 

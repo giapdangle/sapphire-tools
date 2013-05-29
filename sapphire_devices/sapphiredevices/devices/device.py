@@ -230,6 +230,8 @@ class Device(KVObject):
         
         super(Device, self).__init__()
 
+        self._my_lock = _my_lock
+
         self.host = host
         self.firmware_id = None
         self.firmware_name = ""
@@ -341,7 +343,7 @@ class Device(KVObject):
         return self
     
     def _sendCommand(self, cmd):
-        #_my_lock.acquire()
+        #self._my_lock.acquire()
 
         try:
             self._channel.write(cmd.pack())
@@ -355,15 +357,15 @@ class Device(KVObject):
             if self.device_status == 'online':
                 self.device_status = 'offline'
 
-            #_my_lock.release()
+            #self._my_lock.release()
             raise DeviceUnreachableException("Device:%d" % (self.short_addr))
         
 
         
         #return self._response_protocol.unpack(data)
-        _my_lock.acquire()
+        self._my_lock.acquire()
         response = self._response_protocol.unpack(data)
-        _my_lock.release()
+        self._my_lock.release()
 
         if len(data) != response.size():
             print "Cmd response: %s : %4d" % (self.host, len(data))
@@ -381,7 +383,7 @@ class Device(KVObject):
 
             raise ValueError
 
-        #_my_lock.release()
+        #self._my_lock.release()
         
         return response
 

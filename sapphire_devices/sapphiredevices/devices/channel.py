@@ -255,7 +255,7 @@ class SerialChannel(Channel):
 
 class UdpxClientPoolChannel(Channel):
     
-    POOL_SIZE = 4
+    POOL_SIZE = 1
 
     __q = Queue(maxsize=POOL_SIZE)
 

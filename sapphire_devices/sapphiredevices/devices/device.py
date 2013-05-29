@@ -357,20 +357,6 @@ class Device(KVObject):
         response = self._response_protocol.unpack(data)
 
         if len(data) != response.size():
-            print "Cmd response: %s : %4d" % (self.host, len(data))
-            print type(response), response.size()
-            print response
-
-            print "Second try:"
-            response = self._response_protocol.unpack(data)
-            print type(response), response.size()
-
-            if len(data) != response.size():
-                print "Third try:"
-                response = self._response_protocol.unpack(data)
-                print type(response), response.size()
-
-
             raise ValueError
         
         return response
@@ -543,18 +529,7 @@ class Device(KVObject):
             # parse responses
             #for param in response.params:
             for param in response:
-                try:
-                    key = keys[(param.group, param.id)]
-
-                except KeyError:
-                    print "!!!!!!!!"
-                    print self.object_id, self.host
-                    
-                    print response
-                    #print response.params
-                    print "!!!!!!!!"
-
-                    raise
+                key = keys[(param.group, param.id)]
 
                 responses[key] = param.param_value
                 

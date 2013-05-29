@@ -361,7 +361,9 @@ class Device(KVObject):
 
         
         #return self._response_protocol.unpack(data)
+        _my_lock.acquire()
         response = self._response_protocol.unpack(data)
+        _my_lock.release()
 
         if len(data) != response.size():
             print "Cmd response: %s : %4d" % (self.host, len(data))

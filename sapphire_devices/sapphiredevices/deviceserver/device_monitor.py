@@ -94,7 +94,8 @@ class _DeviceMonitor(threading.Thread):
                 pass
 
             except Exception as e:
-                logging.error("DeviceMonitor: %s raised exception: %s: %s" % (self.device.device_id, type(e), e))
+                raise
+                #logging.error("DeviceMonitor: %s raised exception: %s: %s" % (self.device.device_id, type(e), e))
 
             # wait up to retry_timeout seconds before retrying device
             for i in xrange(retry_timeout):

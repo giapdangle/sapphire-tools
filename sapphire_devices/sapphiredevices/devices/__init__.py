@@ -10,6 +10,6 @@
 # </license>
 #
 
-from device import Device, DeviceUnreachableException, SIGNAL_ADD_DEVICE, SIGNAL_REMOVE_DEVICE
+from device import Device, DeviceUnreachableException
 from netscan import SIGNAL_FOUND_DEVICE
 

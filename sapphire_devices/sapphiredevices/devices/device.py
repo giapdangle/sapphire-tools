@@ -36,13 +36,8 @@ from UserDict import DictMixin
 
 from sapphire.core.store import Store
 
-from pydispatch import dispatcher
 
 NTP_EPOCH = datetime(1900, 1, 1)
-
-
-SIGNAL_ADD_DEVICE = "signal_add_device"
-SIGNAL_REMOVE_DEVICE = "signal_remove_device"
 
 
 FILE_TRANSFER_LEN   = 512

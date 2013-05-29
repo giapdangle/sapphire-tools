@@ -350,9 +350,19 @@ class Device(KVObject):
 
             raise DeviceUnreachableException("Device:%d" % (self.short_addr))
         
-        print "Cmd response: %s : %4d" % (self.host, len(data))
 
-        return self._response_protocol.unpack(data)
+
+        #return self._response_protocol.unpack(data)
+        response = self._response_protocol.unpack(data)
+
+        if len(data) != response.size():
+            print "Cmd response: %s : %4d" % (self.host, len(data))
+            print type(response), response.size()
+
+            raise ValueError
+
+            
+        return response
 
     def get_cli(self):
         return [f.replace(CLI_PREFIX, '', 1) for f in dir(self) 

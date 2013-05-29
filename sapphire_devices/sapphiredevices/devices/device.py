@@ -517,6 +517,9 @@ class Device(KVObject):
                 except KeyError:
                     print "!!!!!!!!"
                     print self.object_id, self.host
+                    
+                    print response
+                    print response.params
                     print "!!!!!!!!"
 
                     raise

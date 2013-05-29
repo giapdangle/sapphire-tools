@@ -279,7 +279,7 @@ class Device(KVObject):
     def update(self, key, value, timestamp=None):
         super(Device, self).update(key, value, timestamp=timestamp)
 
-        self._keys[key].value = value
+        self.setKey(key, value)
 
     def batch_update(self, updates, timestamp=None):
         self.setKV(**updates)
@@ -288,16 +288,6 @@ class Device(KVObject):
             self.updated_at = datetime.utcnow()
         else:
             self.updated_at = timestamp
-
-    def publish(self):
-        super(Device, self).publish()
-
-        dispatcher.send(signal=SIGNAL_ADD_DEVICE, device=self)
-
-    def delete(self):
-        super(Device, self).delete()
-
-        dispatcher.send(signal=SIGNAL_REMOVE_DEVICE, device=self)
 
     def receive_notification(self, msg):
         # verify address

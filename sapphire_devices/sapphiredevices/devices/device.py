@@ -363,13 +363,14 @@ class Device(KVObject):
 
         
         #return self._response_protocol.unpack(data)
-        self._my_lock.acquire()
+        #self._my_lock.acquire()
         response = self._response_protocol.unpack(data)
-        self._my_lock.release()
+        #self._my_lock.release()
 
         if len(data) != response.size():
             print "Cmd response: %s : %4d" % (self.host, len(data))
             print type(response), response.size()
+            print response
 
             print "Second try:"
             response = self._response_protocol.unpack(data)

@@ -511,7 +511,16 @@ class Device(KVObject):
 
             # parse responses
             for param in response.params:
-                key = keys[(param.group, param.id)]
+                try:
+                    key = keys[(param.group, param.id)]
+
+                except KeyError:
+                    print "!!!!!!!!"
+                    print self.object_id, self.host
+                    print "!!!!!!!!"
+
+                    raise
+
                 responses[key] = param.param_value
                 
                 # update internal meta data

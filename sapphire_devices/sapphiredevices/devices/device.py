@@ -214,6 +214,9 @@ class KVMeta(DictMixin):
         
 
 class Device(KVObject):
+    import threading
+    _lock = threading.RLock()
+
     def __init__(self, 
                  host=None, 
                  short_addr=0,
@@ -351,9 +354,9 @@ class Device(KVObject):
             raise DeviceUnreachableException("Device:%d" % (self.short_addr))
         
 
-
-        #return self._response_protocol.unpack(data)
-        response = self._response_protocol.unpack(data)
+        with Device._lock:
+            #return self._response_protocol.unpack(data)
+            response = self._response_protocol.unpack(data)
 
         if len(data) != response.size():
             print "Cmd response: %s : %4d" % (self.host, len(data))

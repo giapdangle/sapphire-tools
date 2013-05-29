@@ -359,6 +359,10 @@ class Device(KVObject):
             print "Cmd response: %s : %4d" % (self.host, len(data))
             print type(response), response.size()
 
+            print "Second try:"
+            response = self._response_protocol.unpack(data)
+            print type(response), response.size()
+
             raise ValueError
 
             

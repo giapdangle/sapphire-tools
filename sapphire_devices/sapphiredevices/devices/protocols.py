@@ -193,7 +193,8 @@ class DeviceCommandResponseProtocol(Protocol):
 
     class GetKV(Payload):
         msg_type = 81
-        fields = [KVParamArray(name="params")]
+        #fields = [KVParamArray(name="params")]
+        fields = [RawBinField(name="data")]
 
     class SetKVServer(Payload):
         msg_type = 85

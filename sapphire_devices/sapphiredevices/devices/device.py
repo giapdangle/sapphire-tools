@@ -543,10 +543,14 @@ class Device(KVObject):
         for batch in batches:
             cmd = self._protocol.GetKV(params=batch)
 
-            response = self._sendCommand(cmd)
+            #response = self._sendCommand(cmd)
+            response_msg = self._sendCommand(cmd)
+            response = sapphiredata.KVParamArray().unpack(response_msg.data)
+            #print response
 
             # parse responses
-            for param in response.params:
+            #for param in response.params:
+            for param in response:
                 try:
                     key = keys[(param.group, param.id)]
 

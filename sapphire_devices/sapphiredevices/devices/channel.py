@@ -299,9 +299,11 @@ class UdpxClientPoolChannel(Channel):
         sock = self.getSock()       
         
         try:
+            print "Sent %4d > %s" % (len(data), self.host)
             sock.sendto(data, self.host)
             
             self.read_data, host = sock.recvfrom()
+            print "Recv %4d > %s" % (len(self.read_data), host)
         
             # check host address
             if host[0] != self.host[0]:

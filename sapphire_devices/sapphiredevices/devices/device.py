@@ -363,6 +363,12 @@ class Device(KVObject):
             response = self._response_protocol.unpack(data)
             print type(response), response.size()
 
+            if len(data) != response.size():
+                print "Third try:"
+                response = self._response_protocol.unpack(data)
+                print type(response), response.size()
+
+
             raise ValueError
 
             

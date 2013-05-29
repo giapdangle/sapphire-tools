@@ -215,7 +215,7 @@ class KVMeta(DictMixin):
 
 class Device(KVObject):
     import threading
-    _lock = threading.RLock()
+    _lock = threading.Lock()
 
     def __init__(self, 
                  host=None, 

@@ -213,10 +213,12 @@ class KVMeta(DictMixin):
                 raise DuplicateKeyIDException("DuplicateKeyIDException: %s" % (key))
         
 
-class Device(KVObject):
-    import threading
-    _my_lock = threading.Lock()
+import threading
+_my_lock = threading.Lock()
 
+
+class Device(KVObject):
+    
     def __init__(self, 
                  host=None, 
                  short_addr=0,
@@ -339,44 +341,47 @@ class Device(KVObject):
         return self
     
     def _sendCommand(self, cmd):
-        with Device._my_lock:
-            try:
-                self._channel.write(cmd.pack())
-                
-                data = self._channel.read()
-                
-                if self.device_status != 'online':
-                    self.device_status = 'online'
+        #_my_lock.acquire()
 
-            except channel.ChannelException as e:
-                if self.device_status == 'online':
-                    self.device_status = 'offline'
-
-                raise DeviceUnreachableException("Device:%d" % (self.short_addr))
+        try:
+            self._channel.write(cmd.pack())
             
-
+            data = self._channel.read()
             
-            #return self._response_protocol.unpack(data)
+            if self.device_status != 'online':
+                self.device_status = 'online'
+
+        except channel.ChannelException as e:
+            if self.device_status == 'online':
+                self.device_status = 'offline'
+
+            #_my_lock.release()
+            raise DeviceUnreachableException("Device:%d" % (self.short_addr))
+        
+
+        
+        #return self._response_protocol.unpack(data)
+        response = self._response_protocol.unpack(data)
+
+        if len(data) != response.size():
+            print "Cmd response: %s : %4d" % (self.host, len(data))
+            print type(response), response.size()
+
+            print "Second try:"
             response = self._response_protocol.unpack(data)
+            print type(response), response.size()
 
             if len(data) != response.size():
-                print "Cmd response: %s : %4d" % (self.host, len(data))
-                print type(response), response.size()
-
-                print "Second try:"
+                print "Third try:"
                 response = self._response_protocol.unpack(data)
                 print type(response), response.size()
 
-                if len(data) != response.size():
-                    print "Third try:"
-                    response = self._response_protocol.unpack(data)
-                    print type(response), response.size()
 
+            raise ValueError
 
-                raise ValueError
-
-                
-            return response
+        #_my_lock.release()
+        
+        return response
 
     def get_cli(self):
         return [f.replace(CLI_PREFIX, '', 1) for f in dir(self) 
